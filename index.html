@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
     <title>Monsters</title>
 
     <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -19,43 +20,52 @@
     <link rel="manifest" href="manifest.webmanifest">
 
     <style>
-      html, body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        background: #000;
+      html,
+      body {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        overflow: hidden !important;
+        background: #000 !important;
         touch-action: none;
         overscroll-behavior: none;
         -webkit-user-select: none;
         user-select: none;
       }
 
-      #unity-container {
+      body {
         position: fixed;
         inset: 0;
-        width: 100vw;
-        height: 100dvh;
-        background: #000;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+      }
+
+      #unity-container {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        height: 100dvh !important;
+        background: #000 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
       }
 
       #unity-canvas {
-        display: block;
-        background: #000;
-        width: 900px;
-        height: 1600px;
+        display: block !important;
+        background: #000 !important;
+        width: auto;
+        height: auto;
+        max-width: 100vw !important;
+        max-height: 100dvh !important;
+        object-fit: contain !important;
       }
 
       #unity-loading-bar {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
+        position: absolute !important;
+        left: 50% !important;
+        top: 50% !important;
+        transform: translate(-50%, -50%) !important;
         z-index: 20;
       }
 
@@ -89,7 +99,7 @@
         }
 
         #unity-container {
-          display: none;
+          display: none !important;
         }
       }
     </style>
@@ -130,9 +140,31 @@
       var referenceHeight = 1600;
       var referenceAspect = referenceWidth / referenceHeight;
 
+      function getViewportSize() {
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+
+        if (window.visualViewport) {
+          width = window.visualViewport.width;
+          height = window.visualViewport.height;
+        }
+
+        return {
+          width: Math.floor(width),
+          height: Math.floor(height)
+        };
+      }
+
       function resizeUnityCanvas() {
-        var screenWidth = window.innerWidth;
-        var screenHeight = window.innerHeight;
+        var viewport = getViewportSize();
+
+        var screenWidth = viewport.width;
+        var screenHeight = viewport.height;
+
+        if (screenWidth <= 0 || screenHeight <= 0) {
+          return;
+        }
+
         var screenAspect = screenWidth / screenHeight;
 
         var canvasWidth;
@@ -146,16 +178,25 @@
           canvasHeight = canvasWidth / referenceAspect;
         }
 
+        canvasWidth = Math.floor(canvasWidth);
+        canvasHeight = Math.floor(canvasHeight);
+
         canvas.style.width = canvasWidth + "px";
         canvas.style.height = canvasHeight + "px";
+        canvas.style.maxWidth = "100vw";
+        canvas.style.maxHeight = "100dvh";
       }
 
       window.addEventListener("resize", resizeUnityCanvas);
-      window.addEventListener("orientationchange", function () {
-        setTimeout(resizeUnityCanvas, 300);
-      });
 
-      resizeUnityCanvas();
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", resizeUnityCanvas);
+        window.visualViewport.addEventListener("scroll", resizeUnityCanvas);
+      }
+
+      window.addEventListener("orientationchange", function () {
+        setTimeout(resizeUnityCanvas, 500);
+      });
 
       document.addEventListener("gesturestart", function (e) {
         e.preventDefault();
@@ -190,7 +231,9 @@
           }
 
           setTimeout(function () {
-            warningBanner.removeChild(div);
+            if (warningBanner.contains(div)) {
+              warningBanner.removeChild(div);
+            }
             updateBannerVisibility();
           }, 5000);
         }
@@ -211,6 +254,8 @@
         productVersion: "1.0",
         showBanner: unityShowBanner,
       };
+
+      resizeUnityCanvas();
 
       loadingBar.style.display = "block";
 
