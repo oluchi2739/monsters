@@ -3,10 +3,8 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-
     <title>Monsters</title>
 
-    <!-- iPad / PWA / 縦画面向け -->
     <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="screen-orientation" content="portrait">
     <meta name="orientation" content="portrait">
@@ -39,15 +37,18 @@
         inset: 0;
         width: 100vw;
         height: 100dvh;
-        overflow: hidden;
         background: #000;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
       #unity-canvas {
-        width: 100vw !important;
-        height: 100dvh !important;
         display: block;
         background: #000;
+        width: 900px;
+        height: 1600px;
       }
 
       #unity-loading-bar {
@@ -55,6 +56,7 @@
         left: 50%;
         top: 50%;
         transform: translate(-50%, -50%);
+        z-index: 20;
       }
 
       #unity-warning {
@@ -62,7 +64,7 @@
         left: 0;
         top: 0;
         width: 100%;
-        z-index: 10;
+        z-index: 30;
       }
 
       #rotate-warning {
@@ -124,34 +126,28 @@
       var progressBarFull = document.querySelector("#unity-progress-bar-full");
       var warningBanner = document.querySelector("#unity-warning");
 
-      function unityShowBanner(msg, type) {
-        function updateBannerVisibility() {
-          warningBanner.style.display = warningBanner.children.length ? "block" : "none";
-        }
-
-        var div = document.createElement("div");
-        div.innerHTML = msg;
-        warningBanner.appendChild(div);
-
-        if (type == "error") {
-          div.style = "background: red; padding: 10px;";
-        } else {
-          if (type == "warning") {
-            div.style = "background: yellow; padding: 10px;";
-          }
-
-          setTimeout(function () {
-            warningBanner.removeChild(div);
-            updateBannerVisibility();
-          }, 5000);
-        }
-
-        updateBannerVisibility();
-      }
+      var referenceWidth = 900;
+      var referenceHeight = 1600;
+      var referenceAspect = referenceWidth / referenceHeight;
 
       function resizeUnityCanvas() {
-        canvas.style.width = window.innerWidth + "px";
-        canvas.style.height = window.innerHeight + "px";
+        var screenWidth = window.innerWidth;
+        var screenHeight = window.innerHeight;
+        var screenAspect = screenWidth / screenHeight;
+
+        var canvasWidth;
+        var canvasHeight;
+
+        if (screenAspect > referenceAspect) {
+          canvasHeight = screenHeight;
+          canvasWidth = canvasHeight * referenceAspect;
+        } else {
+          canvasWidth = screenWidth;
+          canvasHeight = canvasWidth / referenceAspect;
+        }
+
+        canvas.style.width = canvasWidth + "px";
+        canvas.style.height = canvasHeight + "px";
       }
 
       window.addEventListener("resize", resizeUnityCanvas);
@@ -177,6 +173,31 @@
 
       document.addEventListener("pointerdown", tryLockPortrait, { once: true });
 
+      function unityShowBanner(msg, type) {
+        function updateBannerVisibility() {
+          warningBanner.style.display = warningBanner.children.length ? "block" : "none";
+        }
+
+        var div = document.createElement("div");
+        div.innerHTML = msg;
+        warningBanner.appendChild(div);
+
+        if (type == "error") {
+          div.style = "background: red; padding: 10px;";
+        } else {
+          if (type == "warning") {
+            div.style = "background: yellow; padding: 10px;";
+          }
+
+          setTimeout(function () {
+            warningBanner.removeChild(div);
+            updateBannerVisibility();
+          }, 5000);
+        }
+
+        updateBannerVisibility();
+      }
+
       var buildUrl = "Build";
       var loaderUrl = buildUrl + "/1.0.loader.js";
 
@@ -201,6 +222,7 @@
           progressBarFull.style.width = 100 * progress + "%";
         }).then(function (unityInstance) {
           loadingBar.style.display = "none";
+          resizeUnityCanvas();
         }).catch(function (message) {
           alert(message);
         });
